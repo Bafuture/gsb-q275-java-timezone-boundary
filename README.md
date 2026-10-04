@@ -19,6 +19,23 @@ Pair-wise GSB 标注任务仓库（第 17 批 / 275）。
 ./mvnw -q verify
 ```
 
+
+## 组件说明
+
+核心入口为 `com.example.gsb.timezone.TimeZoneBoundaryService`：
+
+- `dayBounds(zone, date)`：某时区一天的起止时刻，夏令时切换当天实际为 23/25 小时。
+- `inspect(zone, localDateTime)`：判断本地时间唯一存在（UNIQUE）、不存在（GAP，春季跳过）或不唯一（OVERLAP，秋季重复）。
+- `resolve(zone, localDateTime, strategy)`：解析本地时间；OVERLAP 按 `AmbiguityStrategy`（EARLIER / LATER / FAIL）消歧，GAP 统一前移被跳过的时长。
+- `nextTrigger(zone, timeOfDay, after, strategy)`：本地时间周期任务的下一次触发时刻，跨夏令时切换不重复、不跳过。
+- `convert` / `verifyRoundTrip`：同一时刻的时区转换与往返一致性验证。
+- `statistics()`：参与计算的时区数、gap 与 overlap 次数。
+- `events()`：边界事件日志（gap/overlap 的遇到与处理）。
+
+### 历史时区规则的数据来源
+
+历史与未来时区规则均来自 **JDK 内置的 IANA Time Zone Database（tzdb）**，即 JDK 安装目录下的 `lib/tzdb.dat`。数据版本可通过 `TimeZoneBoundaryService.tzdbVersion()` 查询（如 `2024a`）；如需更新规则（例如某国临时调整夏令时），可使用 Oracle TZUpdater 工具升级 JDK 的 tzdb 数据，无需改动本组件代码。
+
 ## 任务提示词
 
 以下为本题完整的 User Prompt 原文，两次执行必须使用完全相同的文本。
